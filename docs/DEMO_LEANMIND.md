@@ -26,10 +26,10 @@ $env:RENTALAB_ENVIRONMENT = 'development'
 $env:RENTALAB_PORT = '8008'
 Set-Location backend
 ..\.venv\Scripts\python.exe -m alembic upgrade head
-..\.venv\Scripts\python.exe -m rentalab.seed
-..\.venv\Scripts\python.exe -m rentalab.auth.manage_users create-admin --name "Administración de ensayo" --email ensayo-admin@example.test
-..\.venv\Scripts\python.exe -m rentalab.auth.manage_users demo-users
-..\.venv\Scripts\python.exe -m rentalab.start
+..\.venv\Scripts\python.exe -m rentalab.cargar_datos
+..\.venv\Scripts\python.exe -m rentalab.autenticacion.gestionar_usuarios create-admin --name "Administración de ensayo" --email ensayo-admin@example.test
+..\.venv\Scripts\python.exe -m rentalab.autenticacion.gestionar_usuarios demo-users
+..\.venv\Scripts\python.exe -m rentalab.arranque
 ~~~
 
 `create-admin` pide contraseña y confirmación sin mostrarlas. `demo-users` pide otra contraseña configurable y crea `alicia.demo@example.test` y `bruno.demo@example.test` como clientes; ambas cuentas ficticias usan la elegida para ese comando. El registro que se mostrará en vídeo usa **otra cuenta**, por ejemplo `irene.ensayo@example.test`. No existe una contraseña compartida en el repositorio. Para automatización, ambos comandos admiten `--password-env NOMBRE_DE_VARIABLE`: se pasa el nombre de una variable ya configurada, nunca el secreto como argumento.
@@ -72,13 +72,13 @@ En el contexto sin sesión abre `/catalogo`. Busca una cámara, filtra categorí
 
 Antes de seleccionar fechas, señala «Selecciona inicio y fin». Elige 10–12 de noviembre de 2030 y consulta. Explica: «El resultado pertenece a este rango, no es una propiedad permanente del equipo. El fin está excluido: se ocupan los días 10 y 11».
 
-La API usa DTO públicos explícitos en [public_catalogue/schemas.py](../backend/rentalab/public_catalogue/schemas.py); no envía notas internas, clientes ni reservas individuales para que React los oculte.
+La API usa DTO públicos explícitos en [catalogo_publico/esquemas.py](../backend/rentalab/catalogo_publico/esquemas.py); no envía notas internas, clientes ni reservas individuales para que React los oculte.
 
 ## 01:20–02:20 · Registro y acceso con fechas conservadas
 
 Pulsa **Acceder para reservar**, pasa a **Crear cuenta de cliente** y registra Irene con el correo de ensayo y una contraseña propia, sin exponerla. El registro crea siempre `customer` y no inicia sesión. Accede después con esa cuenta.
 
-Muestra que se conservan equipo y rango y que aún aparece **Confirmar reserva**. Volver del acceso no ejecutó la reserva. [destinations.ts](../frontend/src/auth/destinations.ts) acepta únicamente destinos internos permitidos, y [LoginPage.tsx](../frontend/src/pages/LoginPage.tsx) conserva ese destino al cambiar entre acceso y registro.
+Muestra que se conservan equipo y rango y que aún aparece **Confirmar reserva**. Volver del acceso no ejecutó la reserva. [destinos.ts](../frontend/src/autenticacion/destinos.ts) acepta únicamente destinos internos permitidos, y [PaginaAcceso.tsx](../frontend/src/paginas/PaginaAcceso.tsx) conserva ese destino al cambiar entre acceso y registro.
 
 Si ya existe el correo por un ensayo previo, usa otra base/cuenta preparada o accede a la existente y explica que estás mostrando acceso; no presentes el error de duplicado como registro exitoso.
 
@@ -86,15 +86,15 @@ Si ya existe el correo por un ensayo previo, usa otra base/cuenta preparada o ac
 
 Pulsa **Confirmar reserva**. Muestra referencia `Reserva #id`, estado y enlace al detalle. Abre `/mis-reservas`, vuelve al detalle y refresca la ruta. La sesión y los datos se consultan al backend al recargar.
 
-Explica: «El navegador manda equipo y fechas; el servidor obtiene propietario, nombre y correo de la sesión. No acepta elegir otro cliente ni estado». [me/reservations.py](../backend/rentalab/me/reservations.py) define el contrato mínimo.
+Explica: «El navegador manda equipo y fechas; el servidor obtiene propietario, nombre y correo de la sesión. No acepta elegir otro cliente ni estado». [cuenta/reservas.py](../backend/rentalab/cuenta/reservas.py) define el contrato mínimo.
 
-En el editor señala la prueba `test_reservation_lists_and_direct_ids_are_isolated` de [test_me_security.py](../backend/tests/test_me_security.py): otro cliente modifica los identificadores HTTP y recibe 404. La ausencia de un enlace en la interfaz no es la protección. No intentes una reserva duplicada sólo para avanzar el guion.
+En el editor señala la prueba `test_reserva_lista_y_directa_ids_son_aislado` de [test_cuenta_seguridad.py](../backend/tests/test_cuenta_seguridad.py): otro cliente modifica los identificadores HTTP y recibe 404. La ausencia de un enlace en la interfaz no es la protección. No intentes una reserva duplicada sólo para avanzar el guion.
 
 ## 03:15–03:55 · Un aviso de cliente
 
 Desde la reserva confirmada informa de un problema: título «El visor no responde» y descripción ficticia útil. Abre Mis incidencias y observa su estado pendiente/abierto.
 
-Explica: «El equipo se deduce de mi reserva. Este aviso empieza sin bloquear el equipo; sólo administración decide prioridad, bloqueo y resolución». En [me/incidents.py](../backend/rentalab/me/incidents.py), `CustomerIncidentService.create` fija `blocking=False` y registra autor/reserva dentro de la transacción. No requiere que la reserva ya haya comenzado.
+Explica: «El equipo se deduce de mi reserva. Este aviso empieza sin bloquear el equipo; sólo administración decide prioridad, bloqueo y resolución». En [cuenta/incidencias.py](../backend/rentalab/cuenta/incidencias.py), `ClienteIncidenciaServicio.crear` fija `blocking=False` y registra autor/reserva dentro de la transacción. No requiere que la reserva ya haya comenzado.
 
 ## 03:55–05:20 · Gestión en el contexto de administrador
 
@@ -110,28 +110,28 @@ En administración resuelve el aviso con una explicación interna y conserva una
 
 Cancela la reserva desde administración con confirmación y vuelve al detalle del cliente: se ve Cancelada y sus fechas permanecen. El intervalo 10–12 deja de estar ocupado por esa reserva.
 
-Explica la diferencia de roles: «Un cliente sólo cancela antes del inicio según Europe/Madrid; administración puede cancelar también después. Repetir una cancelación conserva el resultado». El ejemplo futuro no demuestra por sí solo ese límite: lo prueba `test_cannot_cancel_on_or_after_start` en [test_me_reservations.py](../backend/tests/test_me_reservations.py).
+Explica la diferencia de roles: «Un cliente sólo cancela antes del inicio según Europe/Madrid; administración puede cancelar también después. Repetir una cancelación conserva el resultado». El ejemplo futuro no demuestra por sí solo ese límite: lo prueba `test_no_puede_cancelar_al_o_despues_arranque` en [test_cuenta_reservas.py](../backend/tests/test_cuenta_reservas.py).
 
 ## 06:10–07:30 · Una regla y sus pruebas
 
 Ten preparados estos archivos:
 
-1. `create_for_customer` y `_create_checked`, en [reservations/service.py](../backend/rentalab/reservations/service.py).
-2. `AvailabilityService.check`, en [availability.py](../backend/rentalab/availability.py).
-3. `conflicting_ids` y `has_blocking_incident`, en [reservations/repository.py](../backend/rentalab/reservations/repository.py).
-4. `immediate_transaction`, en [database.py](../backend/rentalab/database.py).
+1. `crear_para_cliente` y `_crear_comprobado`, en [reservas/servicio.py](../backend/rentalab/reservas/servicio.py).
+2. `DisponibilidadServicio.comprobar`, en [disponibilidad.py](../backend/rentalab/disponibilidad.py).
+3. `en_conflicto_ids` y `tiene_bloqueante_incidencia`, en [reservas/repositorio.py](../backend/rentalab/reservas/repositorio.py).
+4. `inmediata_transaccion`, en [base_datos.py](../backend/rentalab/base_datos.py).
 
 Explica: «Consulta pública, portal, administración y CSV comparten disponibilidad. La consulta previa no retiene el equipo. Antes de confirmar pido el turno SQLite con `BEGIN IMMEDIATE`, compruebo y escribo en la misma unidad. Dos confirmaciones incompatibles dejan una sola reserva. Resolver una de varias averías bloqueantes no libera el equipo».
 
 Desde `backend/`, ejecuta este subconjunto contra bases temporales:
 
 ~~~powershell
-..\.venv\Scripts\python.exe -m pytest -q tests/test_me_reservation_concurrency.py::test_two_customers_using_distinct_connections_cannot_double_book tests/test_incidents.py::test_multiple_blocking_incidents_require_resolving_the_last_one tests/test_admin_connected.py::test_csv_keeps_its_owner_unknown_even_when_a_matching_email_registers
+..\.venv\Scripts\python.exe -m pytest -q tests/test_cuenta_reserva_concurrencia.py::test_dos_clientes_usando_distintos_conexiones_no_puede_doble_reservar tests/test_incidencias.py::test_multiples_bloqueante_incidencias_exigir_resolviendo_la_ultimo_una tests/test_administrador_conectado.py::test_csv_mantiene_su_propietario_desconocido_incluso_cuando_a_coincidente_correo_registra
 ~~~
 
 Muestra las aserciones: conexiones distintas, un éxito y un conflicto, una reserva persistida; un segundo bloqueo pendiente sigue impidiendo reservar; CSV sin propietario no aparece por registrar un correo coincidente. No leas sólo el contador final.
 
-Señala [ProductPage.test.tsx](../frontend/src/portal/ProductPage.test.tsx), caso `keeps dates and focuses a conflict, then requires a fresh check and another explicit confirmation`. Sus respuestas HTTP simuladas prueban recuperación de la interfaz; SQLite se verifica en backend. Si el tiempo no permite ejecutar ese test en cámara, muestra la salida real previa y dilo.
+Señala [PaginaProducto.test.tsx](../frontend/src/portal/PaginaProducto.test.tsx), caso `conserva las fechas y enfoca el conflicto, actualiza automáticamente el calendario y permite otras fechas`. Sus respuestas HTTP simuladas prueban recuperación de la interfaz; SQLite se verifica en backend. Si el tiempo no permite ejecutar ese test en cámara, muestra la salida real previa y dilo.
 
 ## 07:30–08:30 · Entrega y límites verificables
 

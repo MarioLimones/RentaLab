@@ -69,9 +69,9 @@ Invoke-RestMethod http://127.0.0.1:8000/health
 Abre `http://127.0.0.1:8000/catalogo`. La navegación y su recarga usan FastAPI; no arranques Vite para esta comprobación. El volumen se crea vacío, sin usuarios ni datos ficticios. Provisiona las cuentas y los equipos sólo mediante comandos explícitos:
 
 ```powershell
-docker compose exec rentalab python -m rentalab.auth.manage_users create-admin --name "Administración ficticia" --email "admin@example.test"
-docker compose exec rentalab python -m rentalab.auth.manage_users demo-users
-docker compose exec rentalab python -m rentalab.seed
+docker compose exec rentalab python -m rentalab.autenticacion.gestionar_usuarios create-admin --name "Administración ficticia" --email "admin@example.test"
+docker compose exec rentalab python -m rentalab.autenticacion.gestionar_usuarios demo-users
+docker compose exec rentalab python -m rentalab.cargar_datos
 ```
 
 Los dos primeros comandos piden y confirman una contraseña sin eco. Elige una para el administrador y otra para los clientes ficticios `alicia.demo@example.test` y `bruno.demo@example.test`; no se incluyen valores de ejemplo ni cuentas por defecto. `demo-users` crea sólo las cuentas que falten y no modifica permisos ni contraseñas de las existentes. `create-admin` rechaza un correo ya registrado, sin promoverlo. `seed` no crea reservas ni incidencias ni reemplaza equipos existentes. Puedes registrar otros clientes desde `/registro`.
@@ -85,7 +85,7 @@ docker build --pull -t rentalab:local .
 docker run --rm --entrypoint python rentalab:local -c 'import secrets; print(secrets.token_urlsafe(48))'
 ```
 
-Guarda la salida únicamente en `RENTALAB_SESSION_SECRET` del archivo privado. No la publiques. `docker build` no necesita credenciales; Compose exige el secreto al procesar su YAML. Para conservar acceso al operador anterior, mantén conjuntamente su nombre y hash; `python -m rentalab.auth.hash_password` sigue disponible como herramienta interactiva, pero no es necesaria para crear usuarios persistentes.
+Guarda la salida únicamente en `RENTALAB_SESSION_SECRET` del archivo privado. No la publiques. `docker build` no necesita credenciales; Compose exige el secreto al procesar su YAML. Para conservar acceso al operador anterior, mantén conjuntamente su nombre y hash; `python -m rentalab.autenticacion.hash_contrasena` sigue disponible como herramienta interactiva, pero no es necesaria para crear usuarios persistentes.
 
 Comprueba `/catalogo`, `/mis-reservas` y `/admin` abriéndolas directamente y recargando: todas reciben el HTML compilado. React consulta la sesión real y aplica el destino de cada rol; una ruta privada sin acceso muestra el acceso o la denegación correspondiente. El HTML público no concede permisos: FastAPI protege cada operación de datos.
 
@@ -106,7 +106,7 @@ docker compose config --quiet
 docker compose up -d --wait
 docker compose ps
 curl --fail http://127.0.0.1:8000/health
-docker compose exec rentalab python -m rentalab.auth.manage_users create-admin --name "Administración" --email "admin@example.test"
+docker compose exec rentalab python -m rentalab.autenticacion.gestionar_usuarios create-admin --name "Administración" --email "admin@example.test"
 ```
 
 Adapta [deploy/nginx.conf.example](../deploy/nginx.conf.example): sustituye dominio, certificados y puerto si cambió `RENTALAB_HOST_PORT`. Instálalo en el directorio de configuración de tu distribución, comprueba `sudo nginx -t` y recarga `sudo systemctl reload nginx`. La plantilla redirige HTTP a HTTPS y reenvía todas las rutas al mismo FastAPI, sin sustituir sus errores ni caché de API. Sólo se exponen al exterior 80/443; 8000 permanece local.
@@ -139,14 +139,14 @@ Volver a una imagen anterior no revierte el esquema. Si necesitas recuperar una 
 
 ## Copias coherentes de SQLite
 
-El comando utiliza `sqlite3.Connection.backup`, que toma un snapshot consistente incluso si hay transacciones confirmadas aún en WAL. Valida integridad y claves foráneas. No copies únicamente `rentalab.db` mientras la aplicación escribe, ni combines un `.db` de una fecha con auxiliares de otra. SQLite administra `-wal`, `-shm` y `-journal`; no los borres para intentar quitar un bloqueo.
+El comando utiliza `sqlite3.Conexion.backup`, que toma un snapshot consistente incluso si hay transacciones confirmadas aún en WAL. Valida integridad y claves foráneas. No copies únicamente `rentalab.db` mientras la aplicación escribe, ni combines un `.db` de una fecha con auxiliares de otra. SQLite administra `-wal`, `-shm` y `-journal`; no los borres para intentar quitar un bloqueo.
 
 Desde PowerShell, con el servicio en ejecución:
 
 ```powershell
 $backupName = 'rentalab-' + (Get-Date -Format 'yyyyMMdd-HHmmss') + '.db'
 New-Item -ItemType Directory -Force .tools\backups | Out-Null
-docker compose exec rentalab python -m rentalab.backup create "/data/backups/$backupName"
+docker compose exec rentalab python -m rentalab.copias_seguridad create "/data/backups/$backupName"
 if ($LASTEXITCODE -ne 0) { throw 'No se ha creado la copia.' }
 docker compose cp "rentalab:/data/backups/$backupName" ".tools/backups/$backupName"
 if ($LASTEXITCODE -ne 0) { throw 'No se ha exportado la copia.' }
@@ -154,16 +154,16 @@ if ($LASTEXITCODE -ne 0) { throw 'No se ha exportado la copia.' }
 
 El destino de `create` debe ser nuevo: una copia anterior no se sobrescribe. `docker compose cp` exporta ese snapshot cerrado, no la base viva. `.tools` queda excluido de Git y del contexto Docker. Guarda una copia adicional fuera de este ordenador/servidor mediante tu procedimiento habitual, sin incluirla en el repositorio. Los backups contienen clientes, reservas y sesiones; protégelos como la base original.
 
-En Linux puedes usar `backup_name="rentalab-$(date -u +%Y%m%d-%H%M%S).db"`, `mkdir -p backups`, `docker compose exec -T rentalab python -m rentalab.backup create "/data/backups/$backup_name"` y `docker compose cp "rentalab:/data/backups/$backup_name" "backups/$backup_name"`. Conserva el directorio `backups` fuera del repositorio/contexto de construcción y con acceso restringido.
+En Linux puedes usar `backup_name="rentalab-$(date -u +%Y%m%d-%H%M%S).db"`, `mkdir -p backups`, `docker compose exec -T rentalab python -m rentalab.copias_seguridad create "/data/backups/$backup_name"` y `docker compose cp "rentalab:/data/backups/$backup_name" "backups/$backup_name"`. Conserva el directorio `backups` fuera del repositorio/contexto de construcción y con acceso restringido.
 
-Sin Docker, desde `backend/`, usa `..\.venv\Scripts\python.exe -m rentalab.backup create ..\.tools\backups\copia.db`. Se utiliza `RENTALAB_DATABASE_URL` de tu configuración. Las copias no necesitan credenciales de acceso de la SPA.
+Sin Docker, desde `backend/`, usa `..\.venv\Scripts\python.exe -m rentalab.copias_seguridad create ..\.tools\backups\copia.db`. Se utiliza `RENTALAB_DATABASE_URL` de tu configuración. Las copias no necesitan credenciales de acceso de la SPA.
 
 ## Ensayar y realizar una restauración
 
 Primero restaura en una base temporal dentro del volumen, sin tocar `/data/rentalab.db`. Usa un destino inexistente y distinto del servicio:
 
 ```powershell
-docker compose run --rm --no-deps -e RENTALAB_DATABASE_URL=sqlite:////data/restore-check/rentalab.db rentalab python -m rentalab.backup restore "/data/backups/$backupName" --app-stopped
+docker compose run --rm --no-deps -e RENTALAB_DATABASE_URL=sqlite:////data/restore-check/rentalab.db rentalab python -m rentalab.copias_seguridad restore "/data/backups/$backupName" --app-stopped
 if ($LASTEXITCODE -ne 0) { throw 'La restauración de ensayo ha fallado.' }
 docker compose run --rm --no-deps -e RENTALAB_DATABASE_URL=sqlite:////data/restore-check/rentalab.db rentalab python -m alembic current
 ```
@@ -174,7 +174,7 @@ Para recuperar la base real, conserva primero una copia del estado actual, deté
 
 ```powershell
 docker compose stop rentalab
-docker compose run --rm --no-deps rentalab python -m rentalab.backup restore "/data/backups/$backupName" --app-stopped
+docker compose run --rm --no-deps rentalab python -m rentalab.copias_seguridad restore "/data/backups/$backupName" --app-stopped
 if ($LASTEXITCODE -ne 0) { throw 'Restauración fallida: mantener el servicio detenido.' }
 ```
 
@@ -190,7 +190,7 @@ Para introducir una copia externa mientras el servicio está detenido puedes cre
 4. Ejecuta `docker compose up -d --force-recreate --wait`. Conservando secreto y volumen, recarga: cuentas, sesiones no caducadas, reserva con propietario y aviso permanecen. No ejecutes seed ni `down --volumes`.
 5. Crea/exporta un backup, restaura sobre un destino temporal y comprueba identificador, propietario, datos y estado de la reserva y el aviso. La base habitual debe conservarlos. Los registros históricos/importados sin propietario siguen en administración y no se asignan al registrar su mismo correo.
 
-Pruebas duraderas relacionadas: `tests/test_startup.py` comprueba arranque vacío sin usuarios/datos y recreación de aplicación/motor con cuentas, cookies, propiedad y avisos persistidos; `tests/test_admin_reservation_contract.py::test_origin_migration_preserves_owned_unknown_and_linked_incident_rows` migra de `0008` a `head`, conserva todas las columnas previas y comprueba integridad y claves foráneas; `tests/test_spa.py` cubre GET/HEAD, recarga de rutas actuales y conservación de errores JSON 401/404/405/422. Son pruebas de aplicación, no un ensayo de volumen Docker.
+Pruebas duraderas relacionadas: `tests/test_arranque.py` comprueba arranque vacío sin usuarios/datos y recreación de aplicación/motor con cuentas, cookies, propiedad y avisos persistidos; `tests/test_contrato_reservas_administrador.py::test_origen_migracion_preserva_propia_desconocido_y_vinculada_incidencia_filas` migra de `0008` a `head`, conserva todas las columnas previas y comprueba integridad y claves foráneas; `tests/test_spa.py` cubre GET/HEAD, recarga de rutas actuales y conservación de errores JSON 401/404/405/422. Son pruebas de aplicación, no un ensayo de volumen Docker.
 
 Las comprobaciones realmente ejecutadas y sus limitaciones se registran en [PROYECTO.md](PROYECTO.md). No se confunde validar YAML o ejecutar TestClient con construir y recrear un contenedor real.
 

@@ -29,7 +29,7 @@ dist/
 coverage/
 *.tsbuildinfo
 .playwright-cli/
-output/playwright/
+output/
 
 # Editores y sistema
 .idea/

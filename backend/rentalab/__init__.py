@@ -1,1 +1,1 @@
-"""RentaLab application package."""
+"""Paquete de la aplicación RentaLab."""

@@ -30,7 +30,7 @@ El servidor toma `customer_user_id`, nombre y correo de la identidad que acaba d
 
 Las fechas siguen siendo días ISO exactos y rango `[inicio, fin)`, con fin posterior a inicio. Formato o estructura inválidos devuelven 422. Un inicio anterior a hoy en **Europe/Madrid** devuelve 409. Hoy sí se admite como inicio: la confirmación es inmediata si hay disponibilidad. Administración y CSV mantienen sus reglas anteriores, incluidas las operaciones históricas; esta restricción temporal es del cliente.
 
-Consultar disponibilidad pública sigue siendo orientativo. El alta usa `ReservationService.create_for_customer`, la unidad de escritura existente y `_create_checked`, sin una segunda política de solapamiento. Bajo `BEGIN IMMEDIATE` comprueba la fecha y la disponibilidad, inserta propietario y confirma. Dos clientes no pueden confirmar reservas incompatibles: uno obtiene 201 y el otro 409. Para cliente se normalizan los conflictos de disponibilidad a un mensaje comprensible que pide consultar otra vez y elegir otro intervalo; no se revela si la causa fue una avería interna, una reserva o la desactivación de la unidad.
+Consultar disponibilidad pública sigue siendo orientativo. El alta usa `ServicioReservas.crear_para_cliente`, la unidad de escritura existente y `_crear_comprobado`, sin una segunda política de solapamiento. Bajo `BEGIN IMMEDIATE` comprueba la fecha y la disponibilidad, inserta propietario y confirma. Dos clientes no pueden confirmar reservas incompatibles: uno obtiene 201 y el otro 409. Para cliente se normalizan los conflictos de disponibilidad a un mensaje comprensible que pide consultar otra vez y elegir otro intervalo; no se revela si la causa fue una avería interna, una reserva o la desactivación de la unidad.
 
 ## Creación individual y conjunta con idempotencia
 
@@ -46,18 +46,18 @@ Sólo puede realizarse una nueva cancelación cuando `hoy Madrid < start_date`. 
 
 Una reserva **ya cancelada** responde 200 con el mismo historial aunque al repetir la petición haya pasado la fecha de inicio. No vuelve a escribir ni necesita reevaluar el plazo de una cancelación ya realizada. Cancelar una ajena sigue siendo 404 incluso si está cancelada. El cuerpo sólo permite ausencia, null o `{}`: enviar campos adicionales devuelve 422.
 
-`rentalab/clock.py` convierte un instante UTC consciente de zona a `Europe/Madrid`, incluyendo horario de verano/invierno. No usa la fecha del navegador ni la zona horaria local del host. Se inyecta un proveedor `get_today_provider`, no una fecha capturada al entrar en HTTP: el servicio ejecuta `today()` **después de adquirir** `BEGIN IMMEDIATE`. Así una petición que espere por SQLite y cruce medianoche se decide con el nuevo día de Madrid.
+`rentalab/reloj.py` convierte un instante UTC consciente de zona a `Europe/Madrid`, incluyendo horario de verano/invierno. No usa la fecha del navegador ni la zona horaria local del host. Se inyecta un proveedor `obtener_hoy_proveedor`, no una fecha capturada al entrar en HTTP: el servicio ejecuta `today()` **después de adquirir** `BEGIN IMMEDIATE`. Así una petición que espere por SQLite y cruce medianoche se decide con el nuevo día de Madrid.
 
 En pruebas puede congelarse el proveedor:
 
 ```python
 from datetime import date
-from rentalab.clock import get_today_provider
+from rentalab.reloj import get_today_provider
 
 app.dependency_overrides[get_today_provider] = lambda: lambda: date(2026, 11, 1)
 ```
 
-También se puede sustituir `utc_now` para probar la conversión real. No existe un parámetro HTTP que permita al usuario alterar el reloj. Se añade `tzdata==2026.5`, fijado con hashes en ambos locks, porque este Windows no tenía datos IANA. Es el mecanismo de compatibilidad recomendado por la [documentación de ZoneInfo](https://docs.python.org/3/library/zoneinfo.html#data-sources). Las versiones anteriores de las dependencias se mantienen.
+También se puede sustituir `utc_ahora` para probar la conversión real. No existe un parámetro HTTP que permita al usuario alterar el reloj. Se añade `tzdata==2026.5`, fijado con hashes en ambos locks, porque este Windows no tenía datos IANA. Es el mecanismo de compatibilidad recomendado por la [documentación de ZoneInfo](https://docs.python.org/3/library/zoneinfo.html#data-sources). Las versiones anteriores de las dependencias se mantienen.
 
 ## Avisos vinculados a reservas
 

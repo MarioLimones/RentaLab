@@ -9,7 +9,7 @@ Para los ejemplos PowerShell, inicia primero una sesión y define `Invoke-RentaL
 
 | Método | Ruta | Resultado |
 | --- | --- | --- |
-| POST | `/api/incidents` | 201, incidencia abierta y cabecera `Location` |
+| POST | `/api/incidents` | 201, incidencia abierta y cabecera `Ubicacion` |
 | GET | `/api/incidents` | 200, lista ordenada por identificador, incluidas las resueltas |
 | GET | `/api/incidents/{incident_id}` | 200, incidencia y aviso actual sobre reservas |
 | PATCH | `/api/incidents/{incident_id}/status` | 200, transición válida y explicación de resolución |
@@ -57,7 +57,7 @@ Ejemplo de respuesta con una reserva ya confirmada:
 }
 ```
 
-`confirmed_reservation_ids` y `warning` se calculan para la respuesta; no son columnas. El aviso considera **todas** las reservas actualmente `confirmed` de ese equipo, incluidas fechas pasadas o futuras. Excluye las canceladas y no expone nombres ni correos. Si no hay confirmadas, devuelve `[]` y `null`.
+`ids_reservas_confirmadas` y `warning` se calculan para la respuesta; no son columnas. El aviso considera **todas** las reservas actualmente `confirmed` de ese equipo, incluidas fechas pasadas o futuras. Excluye las canceladas y no expone nombres ni correos. Si no hay confirmadas, devuelve `[]` y `null`.
 
 El aviso se devuelve también para incidencias no bloqueantes. Las consultas y cambios de estado lo actualizan según las reservas actuales, incluso cuando la incidencia ya está resuelta. Registrar, avanzar o resolver una incidencia no cambia ningún dato de las reservas.
 
@@ -88,7 +88,7 @@ Con un cuerpo válido, repetir el estado actual, retroceder o reabrir devuelve 4
 
 ## Disponibilidad compartida
 
-`rentalab/availability.py` contiene `AvailabilityService.check`. Tanto `GET /api/equipment/{id}/availability` como `ReservationService.create` pasan por esa política. Desde la fase 4, la [importación CSV](IMPORTACIONES.md) llama a `ReservationService.create_from_code`, que comparte las comprobaciones y la transacción del alta manual para cada reserva nueva.
+`rentalab/disponibilidad.py` contiene `DisponibilidadServicio.comprobar`. Tanto `GET /api/equipment/{id}/disponibilidad` como `ServicioReservas.crear` pasan por esa política. Desde la fase 4, la [importación CSV](IMPORTACIONES.md) llama a `ServicioReservas.crear_desde_codigo`, que comparte las comprobaciones y la transacción del alta manual para cada reserva nueva.
 
 La decisión consulta, en este orden:
 
@@ -106,7 +106,7 @@ Ejemplo: se abre una bloqueante, una reserva se rechaza con 409, se inicia la re
 
 ## Transacciones y orden concurrente
 
-`database.immediate_transaction(session)` centraliza `Session.begin()` y `BEGIN IMMEDIATE`. Lo comparten los repositorios de reservas e incidencias. Crear incidencias y cambiar su estado adquieren el turno de escritura **antes** de leer el equipo, el estado anterior y las reservas del aviso.
+`database.inmediata_transaccion(session)` centraliza `Sesion.begin()` y `BEGIN IMMEDIATE`. Lo comparten los repositorios de reservas e incidencias. Crear incidencias y cambiar su estado adquieren el turno de escritura **antes** de leer el equipo, el estado anterior y las reservas del aviso.
 
 Los datos de la respuesta y el aviso se preparan dentro de esa transacción, y sólo se devuelve éxito después del `COMMIT`. Un fallo al confirmar revierte el alta o el cambio de estado. Se mantiene `RENTALAB_SQLITE_BUSY_TIMEOUT_MS`, el 409 controlado y `Retry-After: 1` del módulo de reservas.
 
@@ -151,7 +151,7 @@ El último resultado sigue considerando otras incidencias, el estado activo y la
 
 ## Cliente React y comprobaciones
 
-El cliente tipado incorpora `Incident`, `IncidentInput`, `IncidentFilters`, `IncidentStatusChange`, `IncidentPriority` e `IncidentStatus` y estos métodos:
+El cliente tipado incorpora `Incidencia`, `EntradaIncidencia`, `IncidenciaFiltros`, `IncidenciaEstadoCambiar`, `PrioridadIncidencia` e `EstadoIncidencia` y estos métodos:
 
 ```typescript
 api.createIncident({ equipment_id: 1, title: 'Revisar conector', blocking: true });
@@ -166,7 +166,7 @@ Serializa también `blocking=false`, conserva los avisos del servidor y acepta `
 Desde `backend/`, las pruebas específicas son:
 
 ```powershell
-..\.venv\Scripts\python.exe -m pytest tests/test_incidents.py tests/test_incident_concurrency.py -q
+..\.venv\Scripts\python.exe -m pytest tests/test_incidencias.py tests/test_incidencia_concurrencia.py -q
 ```
 
 Para ejecutar la suite y las comprobaciones generales, utiliza los comandos del [README](../README.md). El registro de resultados reales está en [PROYECTO.md](PROYECTO.md).

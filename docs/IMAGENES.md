@@ -13,7 +13,7 @@ comparten fotografía porque son dos unidades del mismo modelo ficticio.
 
 Se usan miniaturas de 1280 px suministradas por Commons, sin recortes ni retoques.
 La copia de la fotografía de Sam Wilson conserva CC BY-SA 4.0. Los créditos
-completos están en `backend/rentalab/public_catalogue/assets/photo-credits.txt`,
+completos están en `backend/rentalab/catalogo_publico/assets/photo-credits.txt`,
 accesibles públicamente y enlazados desde el pie del portal.
 
 La etiqueta «Fotografía de ejemplo» distingue estas imágenes de fotografías del
@@ -28,7 +28,7 @@ arranque ni actualización automática de las bases existentes. En la instancia
 de demostración abierta se actualizaron únicamente las imágenes de sus cuatro
 equipos mediante la API administrativa, conservando el resto de sus campos.
 
-El servidor sólo expone los nombres incluidos en `public_catalogue/media.py`;
+El servidor sólo expone los nombres incluidos en `catalogo_publico/medio.py`;
 no sirve directorios arbitrarios. Las imágenes son de lectura pública y las
 operaciones administrativas mantienen sus permisos y CSRF. El SVG local sigue
 actuando como alternativa cuando no hay foto o falla la carga.

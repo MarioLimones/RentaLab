@@ -2,7 +2,7 @@
 
 Aplicación web para gestionar el alquiler de material audiovisual: catálogo público, reservas por fechas, portal de cliente y panel de administración.
 
-Construida con **React, TypeScript, FastAPI y SQLite**. La interfaz y la documentación están en español; el código, en inglés.
+Construida con **React, TypeScript, FastAPI y SQLite**. El código propio, la interfaz y la documentación están en español. Los nombres exigidos por las bibliotecas y los contratos HTTP, JSON y de almacenamiento se conservan por compatibilidad.
 
 ## Funcionalidades
 
@@ -59,20 +59,34 @@ Copia el resultado en `RENTALAB_SESSION_SECRET` dentro de `.env` y conserva `REN
 ```powershell
 Set-Location backend
 ..\.venv\Scripts\python.exe -m alembic upgrade head
-..\.venv\Scripts\python.exe -m rentalab.auth.manage_users create-admin --name "Administración local" --email "admin@example.test"
+..\.venv\Scripts\python.exe -m rentalab.autenticacion.gestionar_usuarios create-admin --name "Administración local" --email "admin@example.test"
 Set-Location ..
 ```
 
 El comando solicita la contraseña y su confirmación sin mostrarlas en pantalla. Los clientes pueden crear su cuenta desde `/registro`. El arranque no crea cuentas ni carga datos automáticamente.
 
-### 3. Arrancar la API
+### 3. Arranque habitual con el catálogo local
+
+Después de la instalación inicial, ejecuta [iniciar.cmd](iniciar.cmd) desde la raíz o con doble clic:
+
+```powershell
+.\iniciar.cmd
+```
+
+Abre el [catálogo local](http://127.0.0.1:8000/catalogo). Este lanzador compila las fuentes guardadas de React antes de iniciar la aplicación, incluida la animación del navbar, y sirve la interfaz y la API desde el mismo proceso. Fija siempre `data/rentalab.db` y `frontend/dist` de esta copia del proyecto, independientemente de la carpeta de ejecución o de una variable de base de datos heredada. Si falta la base, se detiene sin crear otra vacía. Si falla la compilación, no inicia el servidor con una interfaz anterior. Aplica las migraciones pendientes sin cargar ni sustituir equipos, imágenes, cuentas o reservas. Conserva `data/` al reiniciar o actualizar.
+
+Instala Node.js y ejecuta `npm.cmd ci` desde `frontend` la primera vez; el lanzador ejecuta `npm.cmd run build` en cada arranque y no descarga dependencias automáticamente. La animación está guardada en `frontend/src/portal/DisposicionCliente.tsx` y `frontend/src/portal/portal.css` y respeta la preferencia de movimiento reducido del navegador. Las fotografías se sirven desde `backend/rentalab/catalogo_publico/assets/`. El lanzador conserva `.env` y su secreto de sesión; sus rutas solo se fijan dentro del proceso local y no cambian la configuración de Docker.
+
+Para trabajar con recarga automática de frontend puedes usar los dos procesos siguientes.
+
+### 4. Arrancar la API para desarrollo
 
 ```powershell
 Set-Location backend
-..\.venv\Scripts\python.exe -m uvicorn rentalab.main:app --reload --host 127.0.0.1 --port 8000
+..\.venv\Scripts\python.exe -m uvicorn rentalab.principal:aplicacion --reload --host 127.0.0.1 --port 8000
 ```
 
-### 4. Arrancar el frontend
+### 5. Arrancar el frontend para desarrollo
 
 En otra terminal, desde la raíz:
 
@@ -84,7 +98,7 @@ npm.cmd run dev
 
 Abre el [catálogo local](http://127.0.0.1:5173/catalogo). Vite redirige `/api` y `/health` al backend en el puerto 8000.
 
-No necesitas activar el entorno virtual ni modificar la política de ejecución de PowerShell. En arranques posteriores basta con iniciar backend y frontend; aplica las migraciones cuando actualices el esquema.
+No necesitas activar el entorno virtual ni modificar la política de ejecución de PowerShell. Para el uso habitual con el catálogo persistente basta con `iniciar.cmd`; el modo de desarrollo con Vite requiere iniciar ambos procesos y aplicar las migraciones cuando actualices el esquema.
 
 ### Datos de ejemplo opcionales
 
@@ -92,11 +106,11 @@ Para añadir equipos ficticios sin crear reservas ni cuentas, desde la raíz:
 
 ```powershell
 Set-Location backend
-..\.venv\Scripts\python.exe -m rentalab.seed
+..\.venv\Scripts\python.exe -m rentalab.cargar_datos
 Set-Location ..
 ```
 
-La carga conserva los equipos existentes y puede repetirse. También puedes crear clientes ficticios con `rentalab.auth.manage_users demo-users`, que solicita una contraseña, o gestionar los equipos desde `/admin`.
+La carga conserva los equipos existentes y puede repetirse. También puedes crear clientes ficticios con `rentalab.autenticacion.gestionar_usuarios demo-users`, que solicita una contraseña, o gestionar los equipos desde `/admin`.
 
 ## Pantallas y acceso
 
@@ -171,7 +185,7 @@ Desde la raíz:
 docker compose config --quiet
 docker compose build --pull
 docker compose up -d --wait
-docker compose exec rentalab python -m rentalab.auth.manage_users create-admin --name "Administración local" --email "admin@example.test"
+docker compose exec rentalab python -m rentalab.autenticacion.gestionar_usuarios create-admin --name "Administración local" --email "admin@example.test"
 ```
 
 Abre el [catálogo servido por FastAPI](http://127.0.0.1:8000/catalogo). La imagen compila React y sirve frontend y API desde el mismo origen. El contenedor aplica las migraciones antes de arrancar; los datos de ejemplo se cargan sólo mediante comandos explícitos.
@@ -200,6 +214,7 @@ Dockerfile        Construcción del frontend e imagen de ejecución
 
 ## Documentación
 
+- [Código en español y compatibilidad](docs/CODIGO_EN_ESPANOL.md)
 - [Arquitectura](docs/ARQUITECTURA.md)
 - [Autenticación y permisos](docs/ACCESO.md)
 - [Catálogo público](docs/CATALOGO_PUBLICO.md)
@@ -209,7 +224,7 @@ Dockerfile        Construcción del frontend e imagen de ejecución
 - [Reservas](docs/RESERVAS.md) e [incidencias](docs/INCIDENCIAS.md)
 - [Importaciones CSV](docs/IMPORTACIONES.md)
 - [Despliegue y copias de seguridad](docs/DESPLIEGUE.md)
-- [Créditos de las fotografías](backend/rentalab/public_catalogue/assets/photo-credits.txt)
+- [Créditos de las fotografías](backend/rentalab/catalogo_publico/assets/photo-credits.txt)
 
 ## Alcance actual
 

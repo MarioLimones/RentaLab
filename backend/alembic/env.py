@@ -1,22 +1,22 @@
 from sqlalchemy import Connection
 
 from alembic import context
-from rentalab.auth import models as auth_models  # noqa: F401
-from rentalab.config import Settings
-from rentalab.database import Base, create_database_engine
-from rentalab.equipment import models  # noqa: F401
-from rentalab.incidents import models as incident_models  # noqa: F401
-from rentalab.me import models as me_models  # noqa: F401
-from rentalab.reservations import models as reservation_models  # noqa: F401
+from rentalab.autenticacion import modelos as autenticacion_modelos  # noqa: F401
+from rentalab.base_datos import Base, crear_base_datos_motor
+from rentalab.configuracion import Configuracion
+from rentalab.cuenta import modelos as cuenta_modelos  # noqa: F401
+from rentalab.equipo import modelos  # noqa: F401
+from rentalab.incidencias import modelos as incidencia_modelos  # noqa: F401
+from rentalab.reservas import modelos as reserva_modelos  # noqa: F401
 
-config = context.config
-target_metadata = Base.metadata
+configuracion = context.config
+metadatos_objetivo = Base.metadata
 
 
 def run_migrations_offline() -> None:
     context.configure(
-        url=config.get_main_option("sqlalchemy.url") or Settings().database_url,
-        target_metadata=target_metadata,
+        url=configuracion.get_main_option("sqlalchemy.url") or Configuracion().url_base_datos,
+        target_metadata=metadatos_objetivo,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         render_as_batch=True,
@@ -25,25 +25,25 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def migrate(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata, render_as_batch=True)
+def migrate(conexion: Connection) -> None:
+    context.configure(connection=conexion, target_metadata=metadatos_objetivo, render_as_batch=True)
     with context.begin_transaction():
         context.run_migrations()
 
 
 def run_migrations_online() -> None:
-    connection = config.attributes.get("connection")
-    if connection is not None:
-        migrate(connection)
+    conexion = configuracion.attributes.get("connection")
+    if conexion is not None:
+        migrate(conexion)
         return
-    settings = Settings()
-    engine = create_database_engine(
-        config.get_main_option("sqlalchemy.url") or settings.database_url,
-        busy_timeout_ms=settings.sqlite_busy_timeout_ms,
+    ajustes = Configuracion()
+    motor = crear_base_datos_motor(
+        configuracion.get_main_option("sqlalchemy.url") or ajustes.url_base_datos,
+        ocupado_espera_ms=ajustes.espera_sqlite_ocupado_ms,
     )
-    with engine.connect() as connection:
-        migrate(connection)
-    engine.dispose()
+    with motor.connect() as conexion:
+        migrate(conexion)
+    motor.dispose()
 
 
 if context.is_offline_mode():

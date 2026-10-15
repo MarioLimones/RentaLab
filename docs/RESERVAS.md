@@ -9,11 +9,11 @@ Para los ejemplos PowerShell, inicia primero una sesión y define `Invoke-RentaL
 
 | Método | Ruta | Resultado |
 | --- | --- | --- |
-| POST | `/api/reservations` | 201, reserva confirmada y cabecera `Location` |
+| POST | `/api/reservations` | 201, reserva confirmada y cabecera `Ubicacion` |
 | GET | `/api/reservations` | 200, lista ordenada por `start_date` y después `id` |
 | GET | `/api/reservations/{reservation_id}` | 200, reserva actual, también si está cancelada |
 | POST | `/api/reservations/{reservation_id}/cancel` | 200, reserva cancelada; repetir conserva la misma respuesta |
-| GET | `/api/equipment/{equipment_id}/availability` | 200, disponibilidad calculada para un intervalo |
+| GET | `/api/equipment/{equipment_id}/disponibilidad` | 200, disponibilidad calculada para un intervalo |
 
 La cancelación no requiere cuerpo y sólo cambia `status`. No existe borrado, reactivación ni edición de fechas en esta fase. Se permite cancelar una reserva de un equipo que se haya desactivado después de confirmarla.
 
@@ -52,7 +52,7 @@ El correo se valida sin consultas DNS ni envío de mensajes. Se admite el domini
 
 La referencia externa es única en SQLite, distingue mayúsculas y minúsculas y sigue ocupada después de cancelar. Se permiten varias reservas con referencia `null`. Una referencia vacía no equivale a `null`: devuelve 422. El alta manual rechaza referencias repetidas con 409. Desde la fase 4, la [importación CSV](IMPORTACIONES.md) reconoce una referencia con datos normalizados idénticos sin crear otra reserva.
 
-El servidor añade `id` y `status`. Crear siempre confirma; enviar `id` o `status` en el cuerpo devuelve 422. Ejemplo de respuesta 201 con `Location: /api/reservations/1`:
+El servidor añade `id` y `status`. Crear siempre confirma; enviar `id` o `status` en el cuerpo devuelve 422. Ejemplo de respuesta 201 con `Ubicacion: /api/reservations/1`:
 
 ```json
 {
@@ -102,7 +102,7 @@ Respuesta si la reserva anterior está confirmada:
 
 `available` es un resultado calculado; no existe una columna que lo guarde. Si está libre, vale `true`, `reason` es `null` y los identificadores son `[]`. La prioridad de los motivos es `equipment_inactive`, después `blocking_incident` y después `reservation_overlap`. Los dos primeros devuelven identificadores de reservas `[]`; sólo el último incluye las reservas solapadas. La consulta no expone nombres ni correos de clientes. Un equipo inexistente devuelve 404, no una disponibilidad negativa.
 
-La consulta y la creación llaman a `ReservationService.availability`, que delega en el servicio compartido `AvailabilityService.check` de `rentalab/availability.py`. La primera es informativa: `available=true` no retiene material. Crear vuelve a comprobar las reglas dentro de una transacción. La importación CSV utiliza `ReservationService.create_from_code` y el mismo método de creación comprobada que el alta manual, respetando esa política y su transacción.
+La consulta y la creación llaman a `ServicioReservas.disponibilidad`, que delega en el servicio compartido `DisponibilidadServicio.comprobar` de `rentalab/disponibilidad.py`. La primera es informativa: `available=true` no retiene material. Crear vuelve a comprobar las reglas dentro de una transacción. La importación CSV utiliza `ServicioReservas.crear_desde_codigo` y el mismo método de creación comprobada que el alta manual, respetando esa política y su transacción.
 
 Para una reserva existente y otra solicitada del mismo equipo hay solapamiento si:
 
@@ -115,13 +115,13 @@ Sólo se consideran reservas `confirmed`. `[10,12)` ocupa los días 10 y 11: `[1
 
 ## Atomicidad y bloqueos en SQLite
 
-Cada creación y cancelación recibe una sesión nueva. `ReservationRepository.write_transaction` utiliza `database.immediate_transaction`, compartida con incidencias: abre `Session.begin()` y ejecuta `BEGIN IMMEDIATE` **antes de consultar** el equipo, sus incidencias, reservas o referencia externa. Después comprueba las reglas y confirma la escritura dentro de esa transacción. Ningún escritor puede intercalar otra confirmación ni abrir una incidencia entre la consulta y el alta.
+Cada creación y cancelación recibe una sesión nueva. `RepositorioReservas.escritura_transaccion` utiliza `database.inmediata_transaccion`, compartida con incidencias: abre `Sesion.begin()` y ejecuta `BEGIN IMMEDIATE` **antes de consultar** el equipo, sus incidencias, reservas o referencia externa. Después comprueba las reglas y confirma la escritura dentro de esa transacción. Ningún escritor puede intercalar otra confirmación ni abrir una incidencia entre la consulta y el alta.
 
 SQLite admite un escritor simultáneo para toda la base. La segunda conexión espera; cuando obtiene el turno, sus consultas ven la confirmación de la primera y rechazan el solapamiento. Esto también serializa brevemente escrituras de equipos diferentes; no añade un conflicto de negocio entre ellos. No se usa `SELECT FOR UPDATE` ni un cerrojo de Python, que no resolverían este caso de SQLite entre procesos. La política de transacciones está respaldada por la [documentación de SQLite](https://www.sqlite.org/lang_transaction.html#deferred_immediate_and_exclusive_transactions).
 
 El motor mantiene el modo de transacción heredado de `sqlite3` en Python 3.12: SQLAlchemy inicia la unidad de trabajo lógica y `BEGIN IMMEDIATE` inicia expresamente la transacción SQLite. No debe añadirse un `BEGIN` global automático o cambiar `autocommit` sin adaptar y repetir estas pruebas. Véase [SQLAlchemy y el modo heredado de SQLite](https://docs.sqlalchemy.org/en/20/dialects/sqlite.html#legacy-transaction-mode-with-the-sqlite3-driver).
 
-`RENTALAB_SQLITE_BUSY_TIMEOUT_MS` controla la espera (5000 ms por defecto; 0–60000). Al agotar un bloqueo `SQLITE_BUSY` o `SQLITE_LOCKED`, incluso durante `COMMIT`, se revierte la operación y se devuelve 503 con `Retry-After: 1`. No hay bucles de reintentos ni reenvíos automáticos de altas: cada intento vuelve a adquirir el bloqueo y comprobar el estado. Otros errores de persistencia no se convierten en falsos conflictos de bloqueo. En las importaciones, el mismo rollback rechaza sólo esa fila con un mensaje de reintento y permite continuar con las demás; el informe completo mantiene HTTP 200.
+`RENTALAB_SQLITE_BUSY_TIMEOUT_MS` controla la espera (5000 ms por defecto; 0–60000). Al agotar un bloqueo `SQLITE_OCUPADO` o `SQLITE_BLOQUEADO`, incluso durante `COMMIT`, se revierte la operación y se devuelve 503 con `Retry-After: 1`. No hay bucles de reintentos ni reenvíos automáticos de altas: cada intento vuelve a adquirir el bloqueo y comprobar el estado. Otros errores de persistencia no se convierten en falsos conflictos de bloqueo. En las importaciones, el mismo rollback rechaza sólo esa fila con un mensaje de reintento y permite continuar con las demás; el informe completo mantiene HTTP 200.
 
 La migración `0003_reservations` añade la tabla, su clave foránea, estado y rango válidos, referencia única e índice de consulta. Conserva el catálogo existente y no añade reservas de demostración al arrancar.
 
@@ -154,7 +154,7 @@ El ejemplo requiere un equipo activo y un intervalo libre. Si hay una reserva co
 
 ## Consumo desde React
 
-`frontend/src/api/client.ts` expone `Reservation`, `ReservationInput`, `ReservationFilters`, `DateRange` y `Availability`, además de estos métodos:
+`frontend/src/api/cliente.ts` expone `Reserva`, `EntradaReserva`, `FiltrosReservas`, `IntervaloFechas` y `Disponibilidad`, además de estos métodos:
 
 ```typescript
 api.listReservations({ equipment_id: 1, status: 'confirmed' });

@@ -9,69 +9,69 @@ from fastapi.testclient import TestClient
 
 from alembic import command
 
-# Explicit test credentials also let the module-level ASGI app validate its config.
-# This low-cost hash belongs only to disposable test databases.
-TEST_USERNAME = "demo-operator"
-TEST_PASSWORD = "phase6-test-password"
-TEST_PASSWORD_HASH = (
+# Las credenciales de prueba permiten validar la configuración de la aplicación ASGI del módulo.
+# Este hash de bajo coste pertenece exclusivamente a bases de datos de prueba desechables.
+PRUEBA_NOMBRE_USUARIO = "demo-operator"
+PRUEBA_CONTRASENA = "phase6-test-password"
+PRUEBA_CONTRASENA_HASH = (
     "$argon2id$v=19$m=1024,t=1,p=1$M0uxu008I9cVMtVI1lJVIw$"
     "TWtoGdyQCFGn+imYQmWNS0CGuDzuMqgyVlKVyZeVvn4"
 )
-TEST_SESSION_SECRET = "explicit-test-session-secret-at-least-32-characters"
-os.environ["RENTALAB_OPERATOR_USERNAME"] = TEST_USERNAME
-os.environ["RENTALAB_OPERATOR_PASSWORD_HASH"] = TEST_PASSWORD_HASH
-os.environ["RENTALAB_SESSION_SECRET"] = TEST_SESSION_SECRET
+PRUEBA_SESION_SECRETO = "explicit-test-session-secret-at-least-32-characters"
+os.environ["RENTALAB_OPERATOR_USERNAME"] = PRUEBA_NOMBRE_USUARIO
+os.environ["RENTALAB_OPERATOR_PASSWORD_HASH"] = PRUEBA_CONTRASENA_HASH
+os.environ["RENTALAB_SESSION_SECRET"] = PRUEBA_SESION_SECRETO
 
-from rentalab.config import Settings  # noqa: E402
-from rentalab.main import create_app  # noqa: E402
+from rentalab.configuracion import Configuracion  # noqa: E402
+from rentalab.principal import crear_aplicacion  # noqa: E402
 
 
-def authenticate(test_client: TestClient) -> None:
-    csrf = test_client.get("/api/auth/csrf")
+def autenticar(test_cliente_http: TestClient) -> None:
+    csrf = test_cliente_http.get("/api/auth/csrf")
     assert csrf.status_code == 200
-    login = test_client.post(
+    iniciar_sesion = test_cliente_http.post(
         "/api/auth/login",
-        json={"username": TEST_USERNAME, "password": TEST_PASSWORD},
+        json={"username": PRUEBA_NOMBRE_USUARIO, "password": PRUEBA_CONTRASENA},
         headers={"X-CSRF-Token": csrf.json()["csrf_token"]},
     )
-    assert login.status_code == 200
-    # Login rotates the anonymous session and its CSRF token.
-    refreshed = test_client.get("/api/auth/csrf")
-    assert refreshed.status_code == 200
-    test_client.headers["X-CSRF-Token"] = refreshed.json()["csrf_token"]
+    assert iniciar_sesion.status_code == 200
+    # El acceso renueva la sesión anónima y su token CSRF.
+    renovado = test_cliente_http.get("/api/auth/csrf")
+    assert renovado.status_code == 200
+    test_cliente_http.headers["X-CSRF-Token"] = renovado.json()["csrf_token"]
 
 
 @pytest.fixture
-def settings(tmp_path: Path) -> Settings:
-    return Settings(
-        database_url=f"sqlite:///{(tmp_path / 'test.sqlite3').as_posix()}",
-        environment="test",
+def ajustes(tmp_path: Path) -> Configuracion:
+    return Configuracion(
+        url_base_datos=f"sqlite:///{(tmp_path / 'test.sqlite3').as_posix()}",
+        entorno="test",
     )
 
 
 @pytest.fixture
-def app(settings: Settings) -> Iterator[FastAPI]:
-    application = create_app(settings)
-    backend_root = Path(__file__).resolve().parents[1]
-    config = Config(str(backend_root / "alembic.ini"))
-    config.set_main_option("script_location", str(backend_root / "alembic"))
-    config.set_main_option("sqlalchemy.url", settings.database_url)
-    with application.state.engine.begin() as connection:
-        config.attributes["connection"] = connection
-        command.upgrade(config, "head")
-    yield application
-    application.state.engine.dispose()
+def aplicacion(ajustes: Configuracion) -> Iterator[FastAPI]:
+    aplicacion = crear_aplicacion(ajustes)
+    servidor_raiz = Path(__file__).resolve().parents[1]
+    configuracion = Config(str(servidor_raiz / "alembic.ini"))
+    configuracion.set_main_option("script_location", str(servidor_raiz / "alembic"))
+    configuracion.set_main_option("sqlalchemy.url", ajustes.url_base_datos)
+    with aplicacion.state.motor.begin() as conexion:
+        configuracion.attributes["connection"] = conexion
+        command.upgrade(configuracion, "head")
+    yield aplicacion
+    aplicacion.state.motor.dispose()
 
 
 @pytest.fixture
-def client(app: FastAPI) -> Iterator[TestClient]:
-    with TestClient(app) as test_client:
-        authenticate(test_client)
-        yield test_client
+def cliente_http(aplicacion: FastAPI) -> Iterator[TestClient]:
+    with TestClient(aplicacion) as test_cliente_http:
+        autenticar(test_cliente_http)
+        yield test_cliente_http
 
 
 @pytest.fixture
-def equipment_payload() -> dict[str, object]:
+def equipo_contenido_envio() -> dict[str, object]:
     return {
         "code": "CAM-001",
         "name": "Cámara de prueba",

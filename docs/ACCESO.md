@@ -8,14 +8,14 @@ Desde `backend`, aplica las migraciones antes de crear cuentas. Se utiliza la ba
 
 ```powershell
 ..\.venv\Scripts\python.exe -m alembic upgrade head
-..\.venv\Scripts\python.exe -m rentalab.auth.manage_users create-admin --name "Administración local" --email "admin@example.test"
+..\.venv\Scripts\python.exe -m rentalab.autenticacion.gestionar_usuarios create-admin --name "Administración local" --email "admin@example.test"
 # Opcional: dos clientes ficticios; no se ejecuta al arrancar ni al migrar.
-..\.venv\Scripts\python.exe -m rentalab.auth.manage_users demo-users
+..\.venv\Scripts\python.exe -m rentalab.autenticacion.gestionar_usuarios demo-users
 ```
 
 Las contraseñas se eligen mediante `getpass`, sin eco y con confirmación. No hay contraseña predeterminada ni contraseñas como argumentos. Para ejecución no interactiva puede indicarse `--password-env RENTALAB_ADMIN_PASSWORD` o `--password-env RENTALAB_DEMO_PASSWORD`: el argumento es el **nombre** de una variable previamente aprovisionada, no su valor. Retírala después. No la imprimas, no la guardes en el repositorio ni la incluyas en una orden con un literal sensible. Las cuentas ficticias son `alicia.demo@example.test` y `bruno.demo@example.test`. Las cuentas existentes se conservan: el comando no las promueve ni les cambia la contraseña.
 
-La CLI de cuentas crea usuarios, no equipos ni reservas, y no inicia sesiones. `rentalab.seed` conserva su función de cargar únicamente equipos ficticios. Para la demostración completa existe el comando separado y explícito `python -m rentalab.demo`: un administrador, cinco clientes con contraseñas locales distintas, unidades y reservas relativas a una fecha base. [RESERVAS_MULTIUSUARIO.md](RESERVAS_MULTIUSUARIO.md) contiene sus credenciales públicas de prueba, repetibilidad y recorrido. Se prohíbe ejecutarlo en `production`. El registro HTTP nunca crea administradores.
+La CLI de cuentas crea usuarios, no equipos ni reservas, y no inicia sesiones. `rentalab.cargar_datos` conserva su función de cargar únicamente equipos ficticios. Para la demostración completa existe el comando separado y explícito `python -m rentalab.demostracion`: un administrador, cinco clientes con contraseñas locales distintas, unidades y reservas relativas a una fecha base. [RESERVAS_MULTIUSUARIO.md](RESERVAS_MULTIUSUARIO.md) contiene sus credenciales públicas de prueba, repetibilidad y recorrido. Se prohíbe ejecutarlo en `production`. El registro HTTP nunca crea administradores.
 
 | Configuración | Contrato vigente |
 | --- | --- |
@@ -24,7 +24,7 @@ La CLI de cuentas crea usuarios, no equipos ni reservas, y no inicia sesiones. `
 | `RENTALAB_ENVIRONMENT` | `development`/`test` para HTTP local; `production` requiere HTTPS y cookie Secure |
 | `RENTALAB_OPERATOR_USERNAME` y `RENTALAB_OPERATOR_PASSWORD_HASH` | Pareja opcional para conservar el administrador anterior; ambos configurados o ambos ausentes |
 
-La configuración existente no se reescribe. El operador anterior sigue entrando con usuario y hash Argon2id de entorno; sus sesiones anteriores conservan acceso mientras sigan vigentes y no cambien las credenciales. Se representa como `role: "admin", user: null`, una excepción transitoria explícita. Para pasar a cuentas persistidas crea el administrador con la CLI, comprueba su acceso y retira después ambos valores del operador cuando decidas terminar la transición. No se convierten usuarios al iniciar FastAPI. `rentalab.auth.hash_password` sigue disponible para esa compatibilidad. Si el nombre del operador es un correo, esa dirección queda reservada y el registro/CLI devuelve conflicto; no cambies después esa configuración a una dirección que ya pertenezca a una cuenta persistida, porque el acceso anterior tiene prioridad.
+La configuración existente no se reescribe. El operador anterior sigue entrando con usuario y hash Argon2id de entorno; sus sesiones anteriores conservan acceso mientras sigan vigentes y no cambien las credenciales. Se representa como `role: "admin", user: null`, una excepción transitoria explícita. Para pasar a cuentas persistidas crea el administrador con la CLI, comprueba su acceso y retira después ambos valores del operador cuando decidas terminar la transición. No se convierten usuarios al iniciar FastAPI. `rentalab.autenticacion.hash_contrasena` sigue disponible para esa compatibilidad. Si el nombre del operador es un correo, esa dirección queda reservada y el registro/CLI devuelve conflicto; no cambies después esa configuración a una dirección que ya pertenezca a una cuenta persistida, porque el acceso anterior tiene prioridad.
 
 Para usuarios persistidos el correo, nombre, rol y estado activo se consultan en SQLite en cada petición autenticada. Desactivar o cambiar el rol surte efecto en la siguiente petición. Cambiar el hash invalida sus sesiones. Rotar el secreto invalida todas las cookies. Una petición ya autorizada y en curso no se cancela retroactivamente.
 
@@ -72,7 +72,7 @@ La matriz recoge las APIs habilitadas y las pantallas conectadas hasta la fase E
 | --- | --- | --- | --- |
 | Salud, CSRF, registro y acceso | Sí; escrituras con CSRF | Sí | Sí |
 | `GET /api/public/equipment[?q=…&category=…]`, `GET /api/public/equipment/{id}` | Sólo activos, esquema público | Igual | Igual |
-| `GET /api/public/equipment/{id}/availability` | Sin fechas solicita selección; con fechas sólo disponibilidad | Igual | Igual |
+| `GET /api/public/equipment/{id}/disponibilidad` | Sin fechas solicita selección; con fechas sólo disponibilidad | Igual | Igual |
 | `GET /api/public/images/equipment-placeholder.svg` | Sí, recurso local | Sí | Sí |
 | Lecturas antiguas `/api/equipment`, detalle y disponibilidad | 401 | 403 | Sí, información de gestión |
 | Sesión / cierre | 401 | Propia | Propia |
@@ -93,7 +93,7 @@ La fase C habilita altas, consulta y cancelación propias y avisos vinculados me
 
 `customer_user_id` y `origin` son metadatos de respuesta de gestión; no se añaden a los DTO públicos o propios. No pueden indicarse al crear una reserva desde cliente o administración. Registrar un correo coincidente no vincula reservas antiguas ni CSV, y filtrar por correo no asigna ownership. La respuesta de un aviso propio incluye estado y `public_response`; nunca `internal_notes`, `resolution`, prioridad, bloqueo o identificadores de reservas ajenas. Dar una respuesta pública a una incidencia interna no la vincula a un cliente.
 
-`get_current_user`, `require_customer` y `require_admin`, en `auth/dependencies.py`, centralizan identidad y rol. Las rutas de gestión llevan dependencias de administrador; mover una ruta o esconder el botón no elimina esa comprobación. El middleware deniega por defecto el resto de la API y rechaza sesión/rol antes de leer cuerpos privados o multipart. Sin sesión: 401; rol insuficiente: 403; recurso privado ajeno o histórico sin dueño: el mismo 404 que uno inexistente. Los campos administrativos y ownership no forman parte de los esquemas de alta de negocio.
+`obtener_actual_usuario`, `exigir_cliente` y `exigir_administrador`, en `autenticacion/dependencias.py`, centralizan identidad y rol. Las rutas de gestión llevan dependencias de administrador; mover una ruta o esconder el botón no elimina esa comprobación. El middleware deniega por defecto el resto de la API y rechaza sesión/rol antes de leer cuerpos privados o multipart. Sin sesión: 401; rol insuficiente: 403; recurso privado ajeno o histórico sin dueño: el mismo 404 que uno inexistente. Los campos administrativos y ownership no forman parte de los esquemas de alta de negocio.
 
 ## Persistencia y migración conservadora
 
@@ -107,7 +107,7 @@ La fase E añade `0009_reservation_origin` después de `0008_customer_incidents`
 
 ## Cookie, CSRF y React
 
-Se conserva `SessionMiddleware`: cookie firmada `rentalab_session`, HttpOnly, SameSite=Lax, ruta `/`, Secure en producción. Sólo contiene sid aleatorio y contexto CSRF; la firma no cifra. La sesión SQLite impone caducidad absoluta y revocación además de la firma. El cierre invalida también copias anteriores de la cookie. Reiniciar conserva sesiones válidas si base/configuración permanecen iguales.
+Se conserva `SesionIntermediario`: cookie firmada `rentalab_session`, HttpOnly, SameSite=Lax, ruta `/`, Secure en producción. Sólo contiene sid aleatorio y contexto CSRF; la firma no cifra. La sesión SQLite impone caducidad absoluta y revocación además de la firma. El cierre invalida también copias anteriores de la cookie. Reiniciar conserva sesiones válidas si base/configuración permanecen iguales.
 
 Toda escritura, incluidos registro, acceso y cierre, exige `X-CSRF-Token` de `/api/auth/csrf` con la misma cookie. Acceder rota sid y CSRF; token anterior, cruzado, ausente o incorrecto → 403. Una operación privada sin sesión devuelve primero 401. Las respuestas API llevan `Cache-Control: no-store`; bloqueo SQLite agotado → 409 y `Retry-After: 1`.
 

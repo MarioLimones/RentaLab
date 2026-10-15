@@ -67,7 +67,7 @@ La respuesta contiene `totals` y `rows`, en el mismo orden del archivo:
 | `rows[].line` | entero | Línea física donde empieza el registro; la cabecera empieza en 1 |
 | `rows[].external_reference` | texto o `null` | Referencia recortada; `null` si falta o está vacía |
 | `rows[].status` | `accepted`, `already_imported` o `rejected` | Resultado de la fila |
-| `rows[].reservation` | `ReservationRead` o `null` | Reserva nueva o existente para los dos primeros estados; `null` si se rechaza |
+| `rows[].reservation` | `LecturaReserva` o `null` | Reserva nueva o existente para los dos primeros estados; `null` si se rechaza |
 | `rows[].message` | texto | Explicación legible en español, sin trazas ni SQL |
 
 `total = accepted + already_imported + rejected`. Un campo entrecomillado con saltos de línea ocupa varias líneas físicas, pero cuenta como un registro de datos. Ejemplo de informe parcial:
@@ -111,13 +111,13 @@ La respuesta contiene `totals` y `rows`, en el mismo orden del archivo:
 }
 ```
 
-`frontend/src/api/client.ts` expone `api.importReservations(file: File): Promise<ImportReport>` e `IMPORT_EXAMPLE_URL`. Usa `FormData` y deja al navegador generar `Content-Type` con su boundary. El cliente comprueba la estructura de la respuesta y conserva los mensajes; React no analiza el CSV ni reproduce las reglas de disponibilidad o idempotencia.
+`frontend/src/api/cliente.ts` expone `api.importarReservas(file: File): Promise<ImportacionInforme>` e `URL_EJEMPLO_IMPORTACION`. Usa `FormData` y deja al navegador generar `Content-Tipo` con su boundary. El cliente comprueba la estructura de la respuesta y conserva los mensajes; React no analiza el CSV ni reproduce las reglas de disponibilidad o idempotencia.
 
 ## Transacciones y conexión con reservas e incidencias
 
-`ImportService` analiza primero todo el archivo. Después valida cada fila y abre una sesión independiente. `ReservationService.create_from_code` toma `BEGIN IMMEDIATE` **antes** de consultar la referencia, resolver el equipo y decidir si crea o reconoce una reserva.
+`ImportacionServicio` analiza primero todo el archivo. Después valida cada fila y abre una sesión independiente. `ServicioReservas.crear_desde_codigo` toma `BEGIN IMMEDIATE` **antes** de consultar la referencia, resolver el equipo y decidir si crea o reconoce una reserva.
 
-Para una referencia nueva, la creación delega en el mismo método `_create_checked` que el alta manual y consulta `AvailabilityService.check`: equipo activo, ninguna incidencia bloqueante sin resolver y ninguna reserva confirmada solapada. El intervalo usa `existing.start_date < requested.end_date AND existing.end_date > requested.start_date`. No hay inserciones directas que eviten esas reglas.
+Para una referencia nueva, la creación delega en el mismo método `_crear_comprobado` que el alta manual y consulta `DisponibilidadServicio.comprobar`: equipo activo, ninguna incidencia bloqueante sin resolver y ninguna reserva confirmada solapada. El intervalo usa `existing.start_date < requested.end_date AND existing.end_date > requested.start_date`. No hay inserciones directas que eviten esas reglas.
 
 SQLite serializa los escritores. Si dos importaciones compiten por una referencia, la segunda consulta después del commit de la primera y ve «ya importada» o el conflicto de datos. La restricción `UNIQUE` de `reservations.external_reference` protege además el almacenamiento. Se conserva la migración `0003_reservations`, que ya contiene esa restricción; **no hay cambios de esquema ni nueva migración en la fase 4**. Alembic sigue en `0004_incidents`.
 
@@ -149,6 +149,6 @@ Las fixtures de comportamiento están en `backend/tests/fixtures/imports/`: `val
 
 ## Comprobaciones
 
-Desde `backend`, ejecuta `..\.venv\Scripts\python.exe -m pytest -q`. Para centrarse en el módulo: `..\.venv\Scripts\python.exe -m pytest tests/test_imports.py tests/test_import_concurrency.py -q`.
+Desde `backend`, ejecuta `..\.venv\Scripts\python.exe -m pytest -q`. Para centrarse en el módulo: `..\.venv\Scripts\python.exe -m pytest tests/test_importaciones.py tests/test_importacion_concurrencia.py -q`.
 
 Las pruebas cubren cabecera y límites antes de escribir, BOM, fechas, UTF-8, multipart truncado y sin `Content-Length`, mezcla de filas, equipos inexistentes/inactivos, solapamientos, incidencias, cancelaciones, normalización, referencias repetidas/modificadas y persistencia. Dos aplicaciones con conexiones distintas sobre SQLite temporal en disco verifican importaciones simultáneas; otra prueba provoca un bloqueo real y comprueba que la siguiente fila se procesa con una sesión limpia. El registro de ejecuciones y resultados está en [PROYECTO.md](PROYECTO.md).

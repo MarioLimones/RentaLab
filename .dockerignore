@@ -19,6 +19,7 @@
 **/*.db-*
 **/*.sqlite*
 data
+output
 docs
 .idea
 .vscode

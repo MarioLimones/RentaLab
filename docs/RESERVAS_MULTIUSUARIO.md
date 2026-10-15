@@ -9,13 +9,13 @@ Desde la raíz del proyecto, en PowerShell, después de preparar `.env` y las de
 ```powershell
 Set-Location backend
 ..\.venv\Scripts\python.exe -m alembic upgrade head
-..\.venv\Scripts\python.exe -m rentalab.demo
+..\.venv\Scripts\python.exe -m rentalab.demostracion
 ```
 
 También se puede fijar una base futura:
 
 ```powershell
-..\.venv\Scripts\python.exe -m rentalab.demo --base-date 2026-10-15
+..\.venv\Scripts\python.exe -m rentalab.demostracion --base-date 2026-10-15
 ```
 
 Sin `--base-date` se usa el día actual de Europe/Madrid. La base explícita no puede estar en el pasado. No se añaden datos al arrancar ni al migrar. El comando rechaza `RENTALAB_ENVIRONMENT=production` antes de abrir la base.

@@ -41,29 +41,29 @@ No se guardan reservas ni incidencias en `localStorage`. Volver a un listado o a
 
 ```text
 frontend/src/
-  App.tsx                 # Rutas públicas, propias y exigencia visual de rol
-  admin/                  # Layout administrativo, resumen por fechas y etiquetas de propiedad/origen
-  portal/                 # Layout público, catálogo y páginas propias
-  pages/                  # Resumen, catálogos, formularios, detalles e importaciones
-  components/             # Campos, avisos, estados, iconos y conexión HTTP
+  Aplicacion.tsx           # Rutas públicas, propias y exigencia visual de rol
+  administracion/          # Disposición administrativa, resumen por fechas y etiquetas de propiedad/origen
+  portal/                 # Disposición pública, catálogo y páginas propias
+  paginas/                # Resumen, catálogos, formularios, detalles e importaciones
+  componentes/            # Campos, avisos, estados, iconos y conexión HTTP
   hooks/
-    useResource.ts        # Carga, error, reintento y descarte de respuestas antiguas
-    useFormFeedback.ts    # Estado de envío y errores del formulario
-  types/api.ts            # Tipos de datos alineados con OpenAPI
-  api/client.ts           # Único punto de fetch y comprobación de respuestas
-  lib/dates.ts            # Fechas de calendario sin conversión a UTC
-  styles.css              # Tokens y estilos adaptables propios
+    useRecurso.ts         # Carga, error, reintento y descarte de respuestas antiguas
+    useRetroalimentacionFormulario.ts  # Estado de envío y errores del formulario
+  tipos/api.ts            # Tipos de datos alineados con OpenAPI
+  api/cliente.ts          # Único punto de fetch y comprobación de respuestas
+  utilidades/fechas.ts     # Fechas de calendario sin conversión a UTC
+  estilos.css             # Tokens y estilos adaptables propios
 ```
 
-El cliente conserva sus reexportaciones de tipos para los consumidores anteriores. `ApiError` mantiene estado HTTP y mensaje, y añade errores por campo derivados de las rutas de validación de FastAPI. Los textos estándar de validación se presentan en español. Los mensajes de conflicto de Python se conservan. Los contratos de reservas, incidencias y CSV siguen en [RESERVAS.md](RESERVAS.md), [INCIDENCIAS.md](INCIDENCIAS.md) e [IMPORTACIONES.md](IMPORTACIONES.md).
+El cliente conserva sus reexportaciones de tipos para los consumidores anteriores. `ErrorApi` mantiene estado HTTP y mensaje, y añade errores por campo derivados de las rutas de validación de FastAPI. Los textos estándar de validación se presentan en español. Los mensajes de conflicto de Python se conservan. Los contratos de reservas, incidencias y CSV siguen en [RESERVAS.md](RESERVAS.md), [INCIDENCIAS.md](INCIDENCIAS.md) e [IMPORTACIONES.md](IMPORTACIONES.md).
 
-`useResource` sólo aplica respuestas del cargador vigente; una respuesta antigua no reemplaza una nueva. Los detalles se aíslan por identificador. Un cambio correcto conserva la respuesta persistida aunque una lectura posterior falle: el error de recarga se muestra y permite reintentar. Un GET posterior correcto sustituye esa respuesta. Esto no es una segunda persistencia: sólo representa el resultado de la operación HTTP durante la vida de la pantalla.
+`useRecurso` sólo aplica respuestas del cargador vigente; una respuesta antigua no reemplaza una nueva. Los detalles se aíslan por identificador. Un cambio correcto conserva la respuesta persistida aunque una lectura posterior falle: el error de recarga se muestra y permite reintentar. Un GET posterior correcto sustituye esa respuesta. Esto no es una segunda persistencia: sólo representa el resultado de la operación HTTP durante la vida de la pantalla.
 
 La validación local ayuda con campos obligatorios, correo, intervalo, características públicas, imagen, explicación de resolución y tamaño del archivo. Python sigue decidiendo unicidad, actividad, transiciones, solapamientos, incidencias e idempotencia. El resumen consulta la disponibilidad del servicio existente; React no reproduce sus reglas. No se analiza el CSV en React. Las respuestas de gestión incorporan propietario/origen de reservas y comunicación de incidencias; los DTO públicos/propios mantienen su separación. No se han añadido dependencias ni modificado los locks.
 
 ## Fechas, diseño y accesibilidad
 
-Las fechas de alquiler se conservan como cadenas `YYYY-MM-DD` y se envían sin horas. `formatDate` sólo reordena sus partes para mostrar `DD/MM/YYYY`; nunca usa `new Date(fecha)` ni `toISOString()`. La fecha actual del resumen se obtiene para Europe/Madrid, igual que la orientación de fechas del portal. La decisión definitiva de cliente sigue en el reloj del backend.
+Las fechas de alquiler se conservan como cadenas `YYYY-MM-DD` y se envían sin horas. `formatearFecha` sólo reordena sus partes para mostrar `DD/MM/YYYY`; nunca usa `new Fecha(fecha)` ni `toISOString()`. La fecha actual del resumen se obtiene para Europe/Madrid, igual que la orientación de fechas del portal. La decisión definitiva de cliente sigue en el reloj del backend.
 
 El panel usa fondo claro, texto oscuro, acento azul, iconos SVG propios y fuentes del sistema. No requiere fuentes ni imágenes de terceros; las imágenes HTTPS configuradas opcionalmente para fichas públicas tienen alternativa local. En escritorio hay barra lateral; en móvil las cinco secciones siguen visibles sin menú oculto. Los formularios pasan a una columna. Las tablas mantienen sus columnas dentro de una región desplazable y enfocables por teclado.
 
