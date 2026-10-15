@@ -1,0 +1,2 @@
+external_reference,customer_name,customer_email,equipment_code,starts_on,end_date
+ORDER-INVALID,Estudio ficticio,studio@example.test,CAM-001,2026-11-10,2026-11-12

@@ -1,0 +1,1 @@
+"""RentaLab application package."""

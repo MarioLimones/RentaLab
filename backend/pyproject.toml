@@ -1,0 +1,33 @@
+[project]
+name = "rentalab"
+version = "0.1.0"
+description = "Demostración de gestión de alquiler audiovisual"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi>=0.115,<1",
+    "pydantic>=2.12,<3",
+    "pydantic-settings>=2.10,<3",
+    "email-validator>=2.3,<3",
+    "python-multipart>=0.0.20,<1",
+    "argon2-cffi>=25.1,<26",
+    "itsdangerous>=2.2,<3",
+    "tzdata>=2026.5,<2027",
+    "SQLAlchemy>=2.0,<2.1",
+    "alembic>=1.16,<2",
+    "uvicorn>=0.35,<1",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.4,<10", "httpx>=0.28,<1", "ruff>=0.12,<1"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

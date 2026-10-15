@@ -1,0 +1,32 @@
+# Plantilla para Nginx instalado en el host Linux. Sustituir dominio y certificados.
+# El puerto publicado por Compose sólo escucha en 127.0.0.1.
+server {
+    listen 80;
+    server_name rentalab.example.com;
+    return 308 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name rentalab.example.com;
+
+    ssl_certificate /etc/nginx/tls/rentalab/fullchain.pem;
+    ssl_certificate_key /etc/nginx/tls/rentalab/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+
+    # El archivo CSV tiene un límite de 1 MiB en Python; multipart añade cabeceras.
+    client_max_body_size 2m;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Connection "";
+        proxy_intercept_errors off;
+        proxy_cache off;
+        proxy_read_timeout 60s;
+    }
+}

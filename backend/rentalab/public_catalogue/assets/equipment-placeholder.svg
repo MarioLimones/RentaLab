@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title description">
+  <title id="title">Equipo RentaLab</title>
+  <desc id="description">Ilustración de un equipo audiovisual cuando no hay fotografía disponible.</desc>
+  <rect width="640" height="400" rx="24" fill="#edf2f7"/>
+  <rect x="170" y="112" width="260" height="176" rx="20" fill="#d6e1ed" stroke="#34506d" stroke-width="8"/>
+  <circle cx="300" cy="200" r="58" fill="#f8fafc" stroke="#34506d" stroke-width="8"/>
+  <circle cx="300" cy="200" r="28" fill="#6d8cab"/>
+  <path d="M430 165 500 133v134l-70-32z" fill="#d6e1ed" stroke="#34506d" stroke-width="8" stroke-linejoin="round"/>
+  <rect x="202" y="89" width="88" height="25" rx="8" fill="#34506d"/>
+  <circle cx="201" cy="144" r="8" fill="#34506d"/>
+</svg>

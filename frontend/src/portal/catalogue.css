@@ -1,0 +1,123 @@
+.catalogue-intro { display: flex; align-items: end; justify-content: space-between; gap: 48px; padding: 20px 0 36px; }
+.catalogue-intro h1 { max-width: 17ch; font-size: clamp(2.2rem, 4.5vw, 3.5rem); line-height: 1.08; letter-spacing: -.045em; margin-bottom: 20px; color: var(--text); }
+.catalogue-intro p { max-width: 60ch; color: var(--muted); margin: 0; font-size: 1rem; }
+.catalogue-intro-note { flex: 0 0 230px; padding-left: 20px; border-left: 3px solid var(--primary); display: grid; gap: 6px; font-size: .9rem; color: var(--muted); }
+.catalogue-intro-note strong { color: var(--text); font-size: 1rem; }
+.catalogue-filters { padding: 24px 28px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); margin-bottom: 36px; }
+.catalogue-search-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 22px; margin-bottom: 22px; }
+.catalogue-dates-row { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 26px; align-items: start; }
+.catalogue-dates { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.catalogue-dates input { min-width: 0; width: 100%; }
+.catalogue-filter-actions { display: flex; gap: 20px; align-items: center; padding-top: 31px; justify-content: space-between; }
+.catalogue-checkbox { display: flex; align-items: center; gap: 9px; min-height: 44px; font-size: .87rem; cursor: pointer; }
+.catalogue-checkbox input { width: 18px; height: 18px; accent-color: var(--primary); flex-shrink: 0; }
+.portal-shell .catalogue-checkbox input { min-height: 18px; }
+.catalogue-checkbox:has(input:disabled) { color: var(--muted); cursor: default; }
+.catalogue-help { margin: 14px 0 0; color: var(--muted); font-size: .85rem; }
+.catalogue-filters .notice { margin-top: 18px; margin-bottom: 0; }
+.catalogue-results-header { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; margin-bottom: 20px; }
+.catalogue-results-header h2 { font-size: 1.4rem; margin: 0; }
+.catalogue-results-header span, .catalogue-range { color: var(--muted); font-size: .9rem; }
+.catalogue-results-status { min-height: 1.5em; min-width: 7.5em; text-align: right; }
+.catalogue-range { margin-top: -8px; margin-bottom: 22px; }
+.catalogue-loading { padding: 34px 0; color: var(--muted); }
+.catalogue-grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
+.catalogue-card { min-width: 0; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.catalogue-card-image-link { display: block; text-decoration: none; }
+.catalogue-card-image-link:focus-visible { outline-offset: -5px; border-radius: 10px 10px 0 0; }
+.catalogue-image { position: relative; width: 100%; aspect-ratio: 4 / 3; background: #edf2f8; overflow: hidden; }
+.catalogue-image img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.catalogue-image-fallback img { padding: 20px 22px 30px; }
+.catalogue-image-example { background: #fff; }
+.catalogue-image-example img { padding: 12px 16px 32px; }
+.catalogue-image-example .catalogue-image-caption { background: #fff; border-radius: 4px; }
+.catalogue-image-caption { position: absolute; bottom: 9px; left: 14px; right: 14px; color: #536780; font-size: .75rem; text-align: center; }
+.catalogue-card-body { padding: 22px; display: flex; flex-direction: column; flex: 1; }
+.catalogue-category { color: var(--muted); margin-bottom: 6px; font-size: .84rem; font-weight: 550; }
+.catalogue-card h3 { font-size: 1.17rem; line-height: 1.35; margin-bottom: 16px; letter-spacing: -.02em; }
+.catalogue-card h3 a { color: var(--text); text-decoration: none; }
+.catalogue-card h3 a:hover { text-decoration: underline; }
+.catalogue-availability { display: flex; align-items: baseline; gap: 8px; font-size: .83rem; color: var(--muted); line-height: 1.5; }
+.catalogue-availability.is-available { color: #285b42; }
+.catalogue-availability.is-unavailable { color: #89521c; }
+.catalogue-availability.is-available::before, .catalogue-availability.is-unavailable::before { content: ''; width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: currentColor; }
+.catalogue-card-availability { align-items: center; gap: 10px; padding: 12px 14px; margin: 0 0 20px; border: 1px solid var(--border); border-radius: 9px; background: #f5f7fa; font-weight: 650; }
+.catalogue-card-availability svg { flex: 0 0 20px; }
+.catalogue-card-availability.is-available { color: #17613c; background: #edf8f1; border-color: #c0dfcc; }
+.catalogue-card-availability.is-unavailable { color: #a12d36; background: #fff1f2; border-color: #efc7cb; }
+.catalogue-card-availability::before { display: none; }
+.catalogue-card-actions { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 12px; margin-top: auto; }
+.catalogue-card-action { flex-shrink: 0; }
+.catalogue-reservation-count { min-width: 0; min-height: 44px; display: grid; align-content: center; gap: 2px; margin: 0 0 0 auto; padding: 4px 0; border: 0; border-radius: 4px; background: transparent; font: inherit; text-align: right; line-height: 1.35; cursor: pointer; overflow-wrap: anywhere; }
+.catalogue-reservation-count strong { color: var(--text); font-size: .88rem; font-weight: 650; font-variant-numeric: tabular-nums; text-decoration: underline; text-underline-offset: 3px; }
+.catalogue-reservation-count span { color: var(--muted); font-size: .75rem; }
+.catalogue-reservation-count:is(:hover, [aria-expanded="true"]) strong { color: var(--primary); }
+.catalogue-reservation-dates { grid-column: 1 / -1; min-width: 0; padding-top: 16px; border-top: 1px solid var(--border); }
+.catalogue-reservation-dates h4 { color: var(--text); font-size: .88rem; margin: 0 0 12px; }
+.catalogue-reservation-dates p { margin: 0; color: var(--muted); font-size: .8rem; }
+.catalogue-reservation-dates [role="alert"] { color: #a12d36; }
+.catalogue-reservation-dates .button { margin-top: 12px; }
+.catalogue-reservation-dates ol { display: grid; gap: 10px; margin: 0 0 12px; padding-left: 20px; font-size: .8rem; }
+.catalogue-reservation-dates li { padding-left: 3px; color: var(--muted); }
+.catalogue-reservation-dates li span { display: block; }
+.catalogue-reservation-dates time { color: var(--text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.product-layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(320px, 1fr); gap: 56px; align-items: start; }
+.product-heading { margin-bottom: 24px; }
+.product-heading h1 { font-size: clamp(2rem, 3.6vw, 2.8rem); margin: 0; }
+.product-image { border: 1px solid var(--border); border-radius: 12px; }
+.product-image.catalogue-image-fallback img { padding: 32px 40px 42px; }
+.product-description, .product-specifications { margin-top: 32px; }
+.product-description h2, .product-specifications h2 { font-size: 1.2rem; margin-bottom: 12px; }
+.product-description p { white-space: pre-line; color: var(--muted); max-width: 68ch; }
+.product-specifications dl { margin: 0; border-top: 1px solid var(--border); }
+.product-specifications dl div { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 1.5fr); gap: 20px; padding: 13px 0; border-bottom: 1px solid var(--border); font-size: .9rem; }
+.product-specifications dt { color: var(--muted); }
+.product-specifications dd { margin: 0; overflow-wrap: anywhere; }
+.product-booking { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px; position: sticky; top: calc(var(--portal-header-height, 104px) + 24px); }
+.product-booking > h2 { font-size: 1.35rem; margin-bottom: 12px; }
+.product-booking-intro { color: var(--muted); font-size: .9rem; margin-bottom: 24px; }
+.product-booking .catalogue-dates { grid-template-columns: 1fr; gap: 18px; }
+.product-check-button, .product-reserve-button { width: 100%; margin-top: 20px; }
+.product-reserve-button:disabled { cursor: not-allowed; }
+.product-availability { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 24px; }
+.product-availability p { font-size: .88rem; margin-bottom: 0; }
+.product-booking .notice { margin: 18px 0 0; }
+.product-confirmation-note { color: var(--muted); font-size: .8rem; margin: 14px 0 0; }
+.product-confirmation h3 { font-size: 1.35rem; margin: 22px 0 12px; }
+.product-confirmation p { margin: 20px 0; font-size: .9rem; }
+.product-confirmation .button { width: 100%; }
+.product-secondary-link { display: block; text-align: center; padding: 12px 4px 0; font-size: .88rem; }
+.product-admin-action p { font-size: .9rem; color: var(--muted); margin-top: 20px; }
+@media (max-width: 1050px) {
+  .catalogue-dates-row { grid-template-columns: 1fr; gap: 12px; }
+  .catalogue-filter-actions { padding-top: 0; justify-content: flex-end; }
+  .catalogue-grid { gap: 18px; }
+  .product-layout { gap: 30px; grid-template-columns: minmax(0, 1.2fr) minmax(300px, 1fr); }
+  .product-booking { padding: 24px; }
+}
+@media (max-width: 760px) {
+  .catalogue-intro { gap: 24px; align-items: start; padding-top: 10px; }
+  .catalogue-intro-note { display: none; }
+  .catalogue-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .product-layout { grid-template-columns: minmax(0, 1fr); gap: 30px; }
+  .product-booking { position: static; }
+  .product-booking .catalogue-dates { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 521px) and (max-width: 1050px) {
+  .catalogue-card-actions { gap: 8px; }
+  .catalogue-card-action { padding-inline: 10px; }
+}
+@media (max-width: 520px) {
+  .catalogue-intro { padding-bottom: 26px; }
+  .catalogue-intro h1 { font-size: 2.3rem; margin-bottom: 16px; }
+  .catalogue-filters { padding: 20px; margin-bottom: 30px; }
+  .catalogue-search-row, .catalogue-dates { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .catalogue-search-row { margin-bottom: 16px; }
+  .catalogue-filter-actions { gap: 12px; align-items: stretch; flex-direction: column; }
+  .catalogue-filter-actions .button { width: 100%; }
+  .catalogue-grid { grid-template-columns: minmax(0, 1fr); gap: 20px; }
+  .catalogue-card-body { padding: 20px; }
+  .catalogue-results-header h2 { font-size: 1.3rem; }
+  .product-booking { padding: 22px; }
+  .product-booking .catalogue-dates { grid-template-columns: minmax(0, 1fr); }
+}

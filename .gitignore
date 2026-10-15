@@ -1,0 +1,39 @@
+# Entornos y configuración local
+.venv/
+.env
+.env.*
+!.env.example
+.tools/
+**/.npm-cache/
+
+# Python y comprobaciones
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Base de datos local y sus ficheros auxiliares
+data/
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+
+# Frontend
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.playwright-cli/
+output/playwright/
+
+# Editores y sistema
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

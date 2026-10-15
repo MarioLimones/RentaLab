@@ -1,0 +1,4 @@
+external_reference,customer_name,customer_email,equipment_code,starts_on,ends_on
+DEMO-CSV-001,Estudio Aurora,aurora@example.test,CAM-001,2026-11-10,2026-11-12
+DEMO-CSV-002,Producción Brisa,brisa@example.test,CAM-002,2026-11-10,2026-11-12
+DEMO-CSV-003,Sonido Horizonte,horizonte@example.test,AUD-001,2026-11-12,2026-11-14

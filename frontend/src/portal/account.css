@@ -1,0 +1,50 @@
+.portal-account { max-width: 1140px; margin-inline: auto; }
+.portal-account .page-header { align-items: flex-start; margin-bottom: 32px; }
+.portal-account .page-description { max-width: 64ch; }
+.portal-account-reservations, .portal-account-incidents { list-style: none; padding: 0; margin: 0; }
+.portal-account-reservations { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.portal-account-reservations > li { min-width: 0; }
+.portal-account-reservation { height: 100%; display: flex; flex-direction: column; padding: 24px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+.portal-account-reservation-heading, .portal-account-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; }
+.portal-account-reservation h2 { font-size: 1.18rem; line-height: 1.35; margin-bottom: 20px; overflow-wrap: anywhere; }
+.portal-account-reservation h2 a { color: var(--text); text-decoration-thickness: 1px; }
+.portal-account-reference { font-size: .82rem; color: var(--muted); margin: 0; }
+.portal-account-date-range { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+.portal-account-muted { color: var(--muted); font-size: .85rem; }
+.portal-account-reservation > .button { margin-top: auto; align-self: flex-start; }
+.portal-account-detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(260px, 330px); gap: 24px; align-items: start; }
+.portal-account-main { min-width: 0; display: grid; gap: 24px; }
+.portal-account-panel { min-width: 0; padding: 28px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); }
+.portal-account-panel > :last-child { margin-bottom: 0; }
+.portal-account-panel-heading h2 { margin: 0; }
+.portal-account-panel > p { color: var(--muted); max-width: 68ch; }
+.portal-account-equipment { font-size: 1.4rem; line-height: 1.3; font-weight: 650; margin-bottom: 28px; overflow-wrap: anywhere; }
+.portal-account-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; margin: 0 0 24px; }
+.portal-account-facts dt { color: var(--muted); font-size: .82rem; margin-bottom: 4px; }
+.portal-account-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+.portal-account-confirmation { min-width: 0; padding: 16px; margin: 20px 0 0; border: 1px solid #dcbfc3; border-radius: 6px; }
+.portal-account-confirmation legend { color: #882831; font-weight: 600; font-size: .85rem; }
+.portal-account-confirmation .button { width: 100%; margin-top: 10px; }
+.portal-account-incident-form { display: grid; gap: 18px; margin-top: 24px; }
+.portal-account-incident-form .field { margin: 0; }
+.portal-account-incidents { display: grid; gap: 24px; max-width: 840px; }
+.portal-account-user-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.portal-account-response { border-left: 3px solid #b9cdf5; padding: 4px 0 4px 18px; margin-top: 26px; }
+.portal-account-response h3 { font-size: .9rem; margin-bottom: 8px; }
+.portal-account-response > p:last-child { margin-bottom: 0; }
+.portal-account-profile { max-width: 730px; }
+.portal-account-profile .portal-account-facts { margin-top: 28px; }
+@media (max-width: 1000px) { .portal-account-reservations { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 760px) {
+  .portal-account-detail { grid-template-columns: minmax(0, 1fr); }
+  .portal-account-panel { padding: 22px; }
+}
+@media (max-width: 520px) {
+  .portal-account .page-header { align-items: stretch; gap: 20px; }
+  .portal-account .page-actions > .button { width: 100%; }
+  .portal-account-reservations { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .portal-account-panel, .portal-account-reservation { padding: 20px; }
+  .portal-account-facts { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .portal-account-incident-form .inline-actions { align-items: stretch; }
+  .portal-account-incident-form .inline-actions > .button { width: 100%; }
+}

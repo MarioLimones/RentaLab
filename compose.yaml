@@ -1,0 +1,32 @@
+services:
+  rentalab:
+    build: .
+    image: rentalab:local
+    restart: unless-stopped
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp:mode=1777,size=64m
+    ports:
+      - "127.0.0.1:${RENTALAB_HOST_PORT:-8000}:${RENTALAB_PORT:-8000}"
+    environment:
+      RENTALAB_ENVIRONMENT: ${RENTALAB_ENVIRONMENT:-development}
+      RENTALAB_DATABASE_URL: ${RENTALAB_DATABASE_URL:-sqlite:////data/rentalab.db}
+      RENTALAB_FRONTEND_DIST: /app/frontend/dist
+      RENTALAB_PORT: ${RENTALAB_PORT:-8000}
+      RENTALAB_FORWARDED_ALLOW_IPS: ${RENTALAB_FORWARDED_ALLOW_IPS:-127.0.0.1}
+      RENTALAB_SQLITE_BUSY_TIMEOUT_MS: ${RENTALAB_SQLITE_BUSY_TIMEOUT_MS:-5000}
+      RENTALAB_OPERATOR_USERNAME: ${RENTALAB_OPERATOR_USERNAME:-}
+      RENTALAB_OPERATOR_PASSWORD_HASH: ${RENTALAB_OPERATOR_PASSWORD_HASH:-}
+      RENTALAB_SESSION_SECRET: ${RENTALAB_SESSION_SECRET:?Genera RENTALAB_SESSION_SECRET}
+      RENTALAB_SESSION_TTL_SECONDS: ${RENTALAB_SESSION_TTL_SECONDS:-3600}
+    volumes:
+      - rentalab-data:/data
+    deploy:
+      replicas: 1
+
+volumes:
+  rentalab-data:

@@ -1,0 +1,4 @@
+external_reference,customer_name,customer_email,equipment_code,starts_on,ends_on
+ORDER-001," Luz, Norte ",luz@EXAMPLE.TEST, cam-001 ,2026-11-10,2026-11-12
+ORDER-002,Sur Estudio,sur@example.test,CAM-001,2026-11-12,2026-11-13
+ORDER-003,Ñandú Producciones,nandu@example.test,CAM-002,2026-11-10,2026-11-12
